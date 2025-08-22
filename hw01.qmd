@@ -1,16 +1,17 @@
 ---
-title: "Homework 1 Solutions"
+title: "HW 1 Solutions"
 date: last-modified
 format:
     html:        
         warning: true
         error: true
-        code-annotation: 
     ipynb:
         warning: true
         error: true
         code-annotation: below
     pdf:
+        warning: true
+        error: true
         include-in-header: 
            text: |
             \usepackage{fvextra}
@@ -18,12 +19,41 @@ format:
             \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
 execute: 
     echo: true
+    eval: true
 engine: julia
+julia:
+  exeflags: ["+1.11.5"]
 format-links: [pdf, ipynb]
 ---
 
-## Overview
+::: {.content-visible when-format="ipynb"}
+**Name**:
 
+**ID**:
+:::
+
+::: {.callout-important icon=false}
+### Due Date
+
+Thursday, 9/11/25, 9:00pm
+:::
+
+::: {.content-visible when-format="html"}
+
+:::{.callout-caution}
+
+If you are enrolled in the course, make sure that you use the GitHub Classroom link provided in Ed Discussion, or you may not be able to get help if you run into problems.
+
+Otherwise, you can [find the Github repository here]({{< var github_org.repo >}}/hw01).
+
+:::
+
+:::
+
+
+### Load Environment
+
+The following code loads the environment and makes sure all needed packages are installed. This should be at the start of most Julia scripts.
 
 ```{julia}
 #| output: false
@@ -32,11 +62,14 @@ Pkg.activate(@__DIR__)
 Pkg.instantiate()
 ```
 
+Standard Julia practice is to load all needed packages at the top of a file. If you need to load any additional packages in any assignments beyond those which are loaded by default, feel free to add a `using` statement, though [you may need to install the package](https://viveks.me/environmental-systems-analysis/tutorials/julia-basics.html#package-management).
+
 ```{julia}
 using Random
 using Plots
 using GraphRecipes
 using LaTeXStrings
+using Distributions
 ```
 
 ```{julia}
@@ -44,176 +77,216 @@ using LaTeXStrings
 Random.seed!(1)
 ```
 
-## Problems (Total: 50/60 Points)
+## Problems (Total: 30 Points)
 
-### Problem 1 (15 points)
-
-The following subproblems all involve code snippets that require debugging. For each of them:
-
-* identify and describe the logic and/or syntax error;
-* write a fixed version of the function;
-* use your fixed function to solve the problem.
+### Problem 1 (12 points)
 
 #### Problem 1.1
 
-The problem is with the initialization `min_value = 0`, which means no other values can be below it. Instead, we can initialize `min_value` to be `array[1]` and start looping at index `i=2`:
 
 ```{julia}
 function minimum(array)
-    min_value = array[1]        # <1>
-    for i in 2:length(array)    # <1>
+    # initialize the minimum value counter
+    min_value = 0
+    # update minimum values
+    for i in 1:length(array)
         if array[i] < min_value
             min_value = array[i]
         end
     end
+    # return found minimum
     return min_value
 end
 
 array_values = [89, 90, 95, 100, 100, 78, 99, 98, 100, 95]
 @show minimum(array_values);
 ```
-1. Initializing `min_value` at `array[1]` ensures that we start with a candidate value; then we can loop beginning with index 2.
+
+***Solution***:
+
+The code initializes the minimum value (`min_value`) at `0`, which is below any of the values in `array_values`. Instead, if we initialize `min_value = array[1]`, any smaller values will be identified by the loop.
+
+A correct solution might look like:
+
+```{julia}
+function minimum(array)
+    # initialize the minimum value counter
+    min_value = array[1]
+    # update minimum values
+    for i in 2:length(array)
+        if array[i] < min_value
+            min_value = array[i]
+        end
+    end
+    # return found minimum
+    return min_value
+end
+
+array_values = [89, 90, 95, 100, 100, 78, 99, 98, 100, 95]
+@show minimum(array_values);
+```
 
 #### Problem 1.2
 
-There are two issues here. 
-
-1. The first error is trying to access `average_grades`, which is only defined inside the `class_average()` function. This is an issue of *scope*: the variable `average_grades` doesn't exist *globally*. 
-2. The second error is that `mean()` is not part of the `Base` Julia library, but rather the `Statistics` package (part of the usual Julia installation, but needs to be explicitly imported). We could import it with `using Statistics` and use `mean()`, but in this case let's just take the sum and divide by the length.
+Your team is trying to compute the average grade for your class, but the following code produces an `UndefVarError`.
 
 ```{julia}
+# enter student grade vector
 student_grades = [89, 90, 95, 100, 100, 78, 99, 98, 100, 95]
+# compute class average
 function class_average(grades)
-  average_grade = sum(grades) / length(grades)
+  average_grade = mean(student_grades)
   return average_grade
 end
 
-avg_grade = class_average(student_grades) # <1>
-@show avg_grade; 
+@show average_grade;
 ```
-1. Now `avg_grade` exists after being assigned the output of `class_average()`. Note that we didn't reuse the name `average_grade` as that could result in strange outcomes if notebook cells were run out of order.
 
-#### Problem 1.3 
+***Solution***:
 
-The `setindex` error comes from the use of `zero()` instead of `zeros()`:
-
-* [`zero(n)`](https://docs.julialang.org/en/v1/base/numbers/#Base.zero) creates a zero variable of the same type of the argument `n` (*e.g.* `zero(1)` is `0` and `zero(1.5)` is `0.0`).
-* [`zeros(n)`](https://docs.julialang.org/en/v1/base/arrays/#Base.zeros) creates an array of zeroes of dimension `n`, where `n` can be an integer or a tuple (for a matrix or higher-dimensional array).
-
-As a result, the original call `outcomes = zero(n_trials)` sets `outcomes=0`, but then when we try to set `outcomes[1]` in the loop, this is undefined as a scalar does not have an index, resulting in the error.
+The `UndefVarError` is due to a problem with **scope**. The function `class_average()` is defined with an input `grades`, while `student_grades` is a global variable defined outside the function, and therefore is not available to the function. Additionally, `average_grade` is a variable defined within the `class_average()` function, and therefore is not accessible outside of its operation. If we replace `student_grades` inside the `class_average()` function with `grades`, and replace `average_grade` with the output of the function, the code works as intended:
 
 ```{julia}
+# enter student grade vector
+student_grades = [89, 90, 95, 100, 100, 78, 99, 98, 100, 95]
+# compute class average
+function class_average(grades)
+  average_grade = mean(grades)
+  return average_grade
+end
+
+@show class_average(student_grades);
+```
+
+#### Problem 1.3
+
+Your team wants to know the expected payout of an old Italian dice game called *passadieci* (which was analyzed by Galileo as one of the first examples of a rigorous study of probability). The goal of passadieci is to get at least an 11 from rolling three fair, six-sided dice. Your strategy is to compute the average wins from 1,000 trials, but the code you've written below produces a `MethodError`.
+
+
+```{julia}
+# function to simulate a passadieci roll: 3 6-sided dice
 function passadieci()
     # this rand() call samples 3 values from the vector [1, 6]
     roll = rand(1:6, 3) 
     return roll
 end
+# set number of trials and initialize outcome vector
 n_trials = 1_000
-outcomes = zeros(n_trials) # <1>
+outcomes = zero(n_trials)
+# simulate number of passadieci rolls and count wins
 for i = 1:n_trials
-    outcomes[i] = (sum(passadieci()) > 11) # <2>
+    outcomes[i] = (sum(passadieci()) > 11)
 end
 win_prob = sum(outcomes) / n_trials # compute average number of wins
 @show win_prob;
 ```
-1. Changed `zero` to `zeroes`; note that it's generally preferable to initialize an array of the desired size instead of creating an empty vector and using `append`, as that approach can get quite slow as the number of `append` calls increases. 
-2. Now that `outcomes` is a vector, we can access its indexed values.
 
-We could also use [comprehensions](https://viveks.me/environmental-systems-analysis/tutorials/julia-basics.html#comprehensions) and [broadcasting](https://docs.julialang.org/en/v1/manual/arrays/#Broadcasting) (applying a function across each element of an array) instead of initializing `outcomes` as a zero vector and looping to fill it:
+***Solution***:
+
+The line producing the `MethodError` is `outcomes[i] = (sum(passadieci()) > 11)`. The problem is actually with a prior line, `outcomes = zero(n_trials)`, which creates `outcomes`. 
+
+[`zero()`](https://www.jlhub.com/julia/manual/en/function/zero) is the Julia function to get a zero element (the additive identity) based on the type of the input. For example:
 
 ```{julia}
-rolls = [passadieci() for i in 1:n_trials] # <1>
-outcomes = sum.(rolls) .> 11 # <2>
+zero(3)
+```
 
+```{julia}
+zero(3.0)
+```
+
+```{julia}
+zero(false)
+```
+
+Since `zero()` returns a scalar element (as seen in the examples), trying to index its output with `outcomes[i]` results in the error, as Julia does not know how to index into a scalar (in this case, an `Int`).
+
+However, the goal of the relevant line in the script is to initialize a vector consisting of zeros with length `n_trials`. What we actually want is the function [`zeros()`](https://www.jlhub.com/julia/manual/en/function/zeros). Fixing this gets rid of the error:
+
+```{julia}
+# function to simulate a passadieci roll: 3 6-sided dice
+function passadieci()
+    # this rand() call samples 3 values from the vector [1, 6]
+    roll = rand(1:6, 3) 
+    return roll
+end
+# set number of trials and initialize outcome vector
+n_trials = 1_000
+outcomes = zeros(n_trials)
+# simulate number of passadieci rolls and count wins
+for i = 1:n_trials
+    outcomes[i] = (sum(passadieci()) > 11)
+end
 win_prob = sum(outcomes) / n_trials # compute average number of wins
 @show win_prob;
 ```
-1. This is an example of a *comprehension*, which is an inline loop that produces an array; the advantage is that this is sometimes more readable than an explicit loop when the in-loop commands are short. 
-2. This is an example of *broadcasting* (actually twice), indicated by the use of the decimal `.` in function calls. `sum.(v)` applies the function `sum` to every element of `v`, so that adds each of the individual roll vectors to get the sum of those three dice, and `.>` does an element-wise comparison of each of those sums to `11`. You would get an error if you tried `sum.(rolls) > 11` because Julia does not want to make assumptions about your intent in comparing a vector with a scalar.
 
-### Problem 2 (5 points)
+#### Problem 1.4
 
-Let's outline the steps in `mystery_function`:
-
-1. Initialize an empty vector.
-2. If a value `v` is not already in `y`, add `v` to `y`.
-3. Return after looking at all values.
-
-This means that `mystery_function` selects and returns the unique values in `values`, which is confirmed by the test case.
-
-There are many ways to add comments, but we could comment as follows:
+You're interested in writing some code to remove the mean of a vector from all of its components. You've written the following code and tried to test it on a random vector, but your code returns a `MethodError`.
 
 ```{julia}
-# mystery_function: 
-#    Inputs: 
-#       - values: vector of numeric values
-#    Outputs: 
-#       - vector of unique values from the input 
-function mystery_function(values)
-    y = [] # initialize as an empty vector because we don't know how many values we will end up with
-    for v in values
-        if !(v in y) # if a value is not already in y
-            append!(y, v) # append to y
+# function to remove mean from a vector
+function remove_mean(vect)
+    # fucntion to compute the mean
+    function compute_mean(vect)
+        element_sum = 0 # initialize sum
+        # compute mean and return
+        for v in vect
+            element_sum += v
         end
+        return element_sum / length(vect)
     end
-    return y
+
+    m = compute_mean(vect) # compute mean
+    # return demeaned vector
+    return vect - m
 end
 
-list_of_values = [1, 2, 3, 4, 3, 4, 2, 1]
-@show mystery_function(list_of_values);
+random_vect = rand(1_000)
+@show remove_mean(random_vect)
 ```
 
-The built-in Julia function which does the same thing is `unique()` (found using a Google search for "unique Julia vector function").
+***Solution***:
+
+The line that causes the error is `return vect - m`. The problem is that Julia does not make assumptions about how to handle ambiguous operations like adding or subtracting a scalar (`m`) from a vector (`vect`): is this intended and should be done element-wise, or is it a sign that the wrong type was passed (*e.g.* the other input was intended to be a vector)? To make the intent of the coder explicit, Julia asks that you **broadcast** an operation that is intended to be applied to a scalar (such as addition or subtraction of another scalar) to be applied element-wise to a vector, instead of assuming that this is the intended behavior.
+
+To broadcast a function `f()` over a vector `v`, you use a period, as in `f.(v)`. In this case, we want to change the problematic line to `return vect .- m`:
 
 ```{julia}
-@show unique(list_of_values);
-```
-
-### Problem 3 (10 points)
-
-You're interested in writing some code to remove the mean of a vector. 
-
-* Write a function `compute_mean(v)` which sums all of the elements of a vector `v` using a `for` loop and computes the mean. 
-* Make a random vector `random_vect` of length 10 using Julia's `rand()` function. Use your `compute_mean()` function to calculate its mean and subtract it from `random_vect` **without a loop** (using a Julia technique called *broadcasting*; feel free to consult the Julia documentation and search as necessary). Check that the new vector has mean zero.
-
-Our `compute_mean` function should:
-
-1. Initialize a running sum at 0;
-2. Loop over all elements of `v`;
-3. Add each element in turn to the running sum;
-4. Divide the running sum by the number of elements and return.
-
-```{julia}
-function compute_mean(v)
-    v_sum = 0
-    for val in v
-        v_sum += val
+# function to remove mean from a vector
+function remove_mean(vect)
+    # fucntion to compute the mean
+    function compute_mean(vect)
+        element_sum = 0 # initialize sum
+        # compute mean and return
+        for v in vect
+            element_sum += v
+        end
+        return element_sum / length(vect)
     end
-    return v_sum / length(v)
+
+    m = compute_mean(vect) # compute mean
+    # return demeaned vector
+    return vect .- m
 end
 
-random_vect = rand(10)
-rand_mean = compute_mean(random_vect)
-@show rand_mean;
+random_vect = rand(1_000)
+@show remove_mean(random_vect)
 ```
 
-To subtract off the mean from `random_vect`, we can broadcast the subtraction operator by putting a decimal in front: `.-`.^[As a reminder, broadcasting involves applying a function element-wise. If we just tried to subtract `random_vect - rand_mean`, Julia would throw an error because it doesn't know if it should try element-wise subtraction or if we made a mistake in trying to subtract a scalar from a vector, and Julia's design is to err on the side of throwing an error unless we specifically say that we want an element-wise operation through broadcasting.]
 
-```{julia}
-random_vect_demean = random_vect .- rand_mean
-@show compute_mean(random_vect_demean);
-```
+### Problem 2 (18 points)
 
-We have produced a mean-zero random vector! But this isn't *exactly* zero due to numerical precision. This doesn't really matter, as the non-zero entries are insignificant digits, which we can see if we round (which we should do anyway):
+Cheap Plastic Products, Inc. is operating a plant that produces $100 \text{m}^3\text{/day}$ of wastewater that is discharged into Pristine Brook. The wastewater contains $1 \text{kg/m}^3$ of YUK, a toxic substance. The US Environmental Protection Agency has imposed an effluent standard on the plant prohibiting discharge of more than $20 \text{kg/day}$ of YUK into Pristine Brook.
 
-```{julia}
-@show round(compute_mean(random_vect_demean); digits=1); # <1>
-```
-1. The `round(y; digits=n)` function rounds `y` to `n` digits after the decimal place, defaulting to `n=0` (which rounds to the nearest integer, though printing a decimal due to the *type* of the variable).
+Cheap Plastic Products has analyzed two methods for reducing its discharges of YUK. Method 1 is land disposal, which costs $X_1^2/20$ dollars per day, where $X_1$ is the amount of wastewater disposed of on the land ($\text{m}^3\text{/day}$). With this method, 20% of the YUK applied to the land will eventually drain into the stream (*i.e.*, 80% of the YUK is removed by the soil). 
 
-### Problem 4 (20 points)
+Method 2 is a chemical treatment procedure which costs \$1.50 per $\text{m}^3$ of wastewater treated. The chemical treatment has an efficiency of $e= 1 - 0.005X_2$, where $X_2$ is the quantity of wastewater ($\text{m}^3\text{/day}$) treated. For example, if $X_2 = 50 \text{m}^3\text{/day}$, then $e = 1 - 0.005(50) = 0.75$, so that 75% of the YUK is removed.
 
-These equations will be derived in terms of $X_1$ (the land disposal amount, in kg/day) and $X_2$ (the chemically treated amount, in kg/day), where $X_1 + X_2 \leq 100\ \mathrm{kg/day}$. Note that we don't need to explicitly represent the amount of directly disposed YUK, as this is $100 - X_1 - X_2$ and so is not a free variable.
+Cheap Plastic Products is wondering how to allocate their wastewater between these three disposal and treatment methods (land disposal, chemical treatment, and direct disposal) to meet the effluent standard while keeping costs manageable.
+
+The flow of wastewater through this treatment system is shown in @fig-wastewater. Modify the edge labels (by editing the `edge_labels` dictionary in the code producing @fig-wastewater) to show how the wastewater allocations result in the final YUK discharge into Pristine Brook. For the `edge_label` dictionary, the tuple $(i, j)$ corresponds to the arrow going from node $i$ to node $j$. The syntax for any entry is `(i, j) => "label text"`, and the label text can include mathematical notation if the string is prefaced with an `L`, as in `L"x_1"` will produce $x_1$.
 
 
 ```{julia}
@@ -227,7 +300,7 @@ A = [0 1 1 1;
 
 names = ["Plant", "Land Treatment", "Chem Treatment", "Pristine Brook"]
 # modify this dictionary to add labels
-edge_labels = Dict((1, 2) => L"X_1", (1,3) => L"X_2", (1, 4) => L"100 - X_1 - X_2", (2, 4) => L"0.2X_1",(3, 4) => L"0.005X_2^2")
+edge_labels = Dict((1, 2) => "", (1,3) => "", (1, 4) => "",(2, 4) => "",(3, 4) => "")
 shapes=[:hexagon, :rect, :rect, :hexagon]
 xpos = [0, -1.5, -0.25, 1]
 ypos = [1, 0, 0, -1]
@@ -236,6 +309,13 @@ p = graphplot(A, names=names,edgelabel=edge_labels, markersize=0.15, markershape
 display(p)
 ```
 
+#### Problem 2.1
+
+Formulate a mathematical model for the treatment cost and the amount of YUK that will be discharged into Pristine Brook based on the wastewater allocations. This is best done with some equations and supporting text explaining the derivation. Make sure you include, as additional equations in the model, any needed constraints on relevant values. You can find some basics on writing mathematical equations using the LaTeX typesetting syntax [here](https://viveks.me/environmental-systems-analysis/tutorials/latex-notebook.qmd), and a cheatsheet with LaTeX commands can be found on the course website's [Resources page](https://viveks.me/environmental-systems-analysis/resources/markdown.qmd).
+
+***Solution***:
+
+These equations will be derived in terms of $X_1$ (the land disposal amount, in kg/day) and $X_2$ (the chemically treated amount, in kg/day), where $X_1 + X_2 \leq 100\ \mathrm{kg/day}$. Note that we don't need to explicitly represent the amount of directly disposed YUK, as this is $100 - X_1 - X_2$ and so is not a free variable.
 
 The amount of YUK which will be discharged is
 
@@ -249,6 +329,12 @@ The cost is
 $$
 C(X_1, X_2) = X_1^2/20 + 1.5 X_2.
 $$
+
+#### Problem 2.2 
+
+Implement your systems model as a Julia function which computes the resulting YUK discharge and cost for a particular treatment plan. 
+
+***Solution***:
 
 A Julia function for this model could look like:
 
@@ -271,64 +357,75 @@ end
 1. Checking for these kinds of errors is useful when there are hard limits on what arguments can be passed in. This syntax lets you throw an error which says something is going wrong in the code. In general, Julia style is to try to do a computation and throw an error if something goes wrong.
 2. We use broadcasting here to work on vectors of arguments for efficiency. This is in no way required.
 
-Now, let's experiment with different outcomes.^[We left this intentionally open for you to conceptualize how to generate combinations and to look into different ways of implementing these in Julia. For a more systematic approach, we can sample combinations from a [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution), which samples combinations which add up to 1. This will require installing and loading the `Distributions.jl` package (we will spend more time working with `Distributions.jl` later).] Some other options include just randomly sampling values (but be careful of not sampling impossible combinations of $X_1$ and $X_2$), manually searching, or setting up a grid of combinations.
+#### Problem 2.3
+
+Use your function to experiment with 1,000 different combinations of wastewater discharge and treatment. You can do this with either a grid search or by sampling from a [Dirichlet distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution) (a $\text{Dirichlet}(1, n)$ distribution will generate uniformly-weighted $n$-dimensional vectors whose components add up to 1; see the [`Distributions.jl` documentation](https://juliastats.org/Distributions.jl/stable/starting/) for how to sample from probability distributions in Julia). Plot the results of these experiments. Do any satisfy the YUK effluent standard (plot this as well as a dashed red line). What was the cost of solutions satisfying the standard? What can you say about the tradeoff between treatment cost and YUK discharge? You don't have to find an "optimal" solution to this problem, but what do you think would be needed to find a better solution? 
+
+***Solution***:
+
+In this case, we will sample from a Dirichlet distribution, but a more systematic search would also be acceptable.
 
 ```{julia}
 #| label: fig-yuk-solution
-#| fig-cap: Sampled solutions for the wastewater allocation problem in Problem 4, showing cost vs. YUK concentration. The red line marks the regulatory discharge limit of 20kg/day.
+#| fig-cap: Sampled solutions for the wastewater allocation problem in Problem 2, showing cost vs. YUK concentration. The red line marks the regulatory discharge limit of 20kg/day.
 #| fig-align: center
 
-# Install and load Distributions.jl
-Pkg.add("Distributions") # <1>
-using Distributions # <1>
-
-yuk_distribution = Dirichlet(3, 1) # <2>
+yuk_distribution = Dirichlet(3, 1) # <1>
 # Need to scale samples from 0 to 200, not 0 to 1
 yuk_samples = 100 * rand(yuk_distribution, 1000)
 D, C = yuk_discharge(yuk_samples[1,:], yuk_samples[2, :])
 
 # Plot the discharge vs. cost and add a line for the regulatory limit
-p = scatter(D, C, markersize=2, label="Treatment Samples") # <3>
-vline!(p, [20], color=:red, label="Regulatory Limit") # <4>
+p = scatter(D, C, markersize=2, label="Treatment Samples") # <2>
+vline!(p, [20], color=:red, label="Regulatory Limit") # <3>
 # Label axes
-xaxis!(p, "YUK Discharge (kg/day)") # <5>
+xaxis!(p, "YUK Discharge (kg/day)") # <4>
 # For the y-axis label, we need to "escape" the $ by adding a slash
 # otherwise it interprets that as starting math mode
 yaxis!(p, "Treatment Cost (\$/day)") # <5>
 ```
-1. This is how we add new packages that are not in the existing environment and then load them.
-2. The Dirichlet distribution is over combinations of values which add up to 1, which is what we want for shares of the total YUK discharge. The 3D Dirichlet distribution with parameters equal to 1 is basically uniform over these combinations. See: <https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.Dirichlet>.
-3. This is a basic scatter plot with a label for the plot elements. If we wanted to turn the legend off in any plot, use `legend=false` as an argument.
-4. This is how to add a vertical line to a plot with a label. The syntax for a horizontal line is `hline(...)`. The `!` at the end of `vline!()` is important: this is standard Julia syntax to distinguish commands which *mutate* (or change) their input (in this case, the first argument `p`, the plot object), as this is not always desirable behavior.
-5. This is how to change axis labels. Notice that this also mutates the input plot.
+1. The Dirichlet distribution is over combinations of values which add up to 1, which is what we want for shares of the total YUK discharge. The 3D Dirichlet distribution with parameters equal to 1 is basically uniform over these combinations. See: <https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.Dirichlet>.
+2. This is a basic scatter plot with a label for the plot elements. If we wanted to turn the legend off in any plot, use `legend=false` as an argument.
+3. This is how to add a vertical line to a plot with a label. The syntax for a horizontal line is `hline(...)`. The `!` at the end of `vline!()` is important: this is standard Julia syntax to distinguish commands which *mutate* (or change) their input (in this case, the first argument `p`, the plot object), as this is not always desirable behavior.
+4. This is how to change axis labels. Notice that this also mutates the input plot.
 
 We can see that there are a few treatment strategies which comply with the limit, but they are fairly expensive. This is an example of a *tradeoff* between two objectives^[More on this later in the semester!], where one has to make a choice between what objectives to prioritize. But one thing to note is that just choosing an expensive strategy does not guarantee compliance.
 
-### Problem 5 (10 points)
 
-#### Problem 5.1
+#### Problem 2.4
 
-Here is one solution: Julia includes a function `iseven()` which returns 1 if the argument is even and 0 if it is odd. So we can use a comprehension to evaluate `!iseven(x)` (the `!` is Boolean negation) over the range `0:149`, which will return a vector of 1s and 0s, and then add up the vector to get the count of odd numbers. Another approach could be to use the `isodd()` function directly.
+Find the strategies which minimize cost and YUK discharge (these will be different strategies) analytically and find the values of the objective metrics. Plot these values in the plot that you created for Problem 2.3. How do their values compare to the spread of values that you found in that problem? Would you select either of them (explain why or why not)?
+
+***Solution***:
+
+To minimize these functions, we want to look at either the critical points (where the partial derivatives are zero) or at the constraints. For cost, $dC/dX_2 = 1.5$ is never zero, so there are no critical points. However, the lowest-cost point occurs at the boundary $X_2 = 0$ and $X_1 = 0$, where there is no cost (unsurprisingly, doing nothing often costs the least). But this does not comply with the constraint, as the YUK discharge is 100 kg/day. 
+
+The YUK discharge function $D$ has the following partial derivatives:
+
+\begin{align*}
+\frac{\partial D}{\partial X_1} &= -0.8 \\
+\frac{\partial D}{\partial X_2} &= 0.01 X_2 - 1,
+\end{align*}
+
+so we need to check the values along the boundaries $X_1 = 100 - X_2$, $X_1 = 0$, and $X_2 = 0$. $$D(100 - X_2, X_2) = 20X_2 - 0.005 X_2^2,$$ which has a partial derivative $$\frac{\partial D}{\partial X_2}(100 - X_2, X_2) = -0.2 + 0.01 X_2.$$ This has a minimum at $X_2 = 20$ and therefore $X_1 = 80$, with a corresponding YUK discharge of 18 kg/day. If $X_2 = 0$, the minimum value (at $X_1 = 100$) is a discharge of 20 kg/day, while the minimum value along $X_1 = 0$ is 50 kg/day ($X_2 = 100$). Thus, the minimum occurs at $X_1 = 80$ and $X_2 = 20$, with a corresponding cost of \$350/day.
+
+Adding these points to the plot:
 
 ```{julia}
-odd_count = sum([!iseven(x) for x in 0:149])
+#| label: fig-yuk-solutions
+#| fig-cap: Added the solutions from Problem 2.4 (purple for least-discharge, orange for least-cost circles) to the sampled solutions from Problem 2.3.
+#| fig-align: center
+
+# least cost solution
+least_cost = yuk_discharge(0, 0)
+scatter!(p, least_cost, color=:orange, label="Least Cost Solution")
+# least discharge solution
+least_discharge = yuk_discharge(80, 20)
+scatter!(p, least_discharge, color=:purple, label="Least Discharge Solution")
 ```
 
-#### Problem 5.2
+The least-cost solution, unsurprisingly, would be pretty bad given how much the YUK discharge violates the regulatory constraint. However, the least-discharge solution looks pretty good: there are more expensive treatment plans which comply with the regulatory constraint, but not many that are less expensive. 
 
-```{julia}
-function polynomial(x, a)
-    p = 0 # initialize value of polynomial
-    for i in eachindex(a) # <1>
-        p += a[i] * x^(i-1) # <2>
-    end
-    return p
-end
+## References
 
-a = [1, 0, -1, 2]
-x = 2
-@show polynomial(x, a); # <3>
-```
-1. `for i in eachindex(a)` is the same thing as `for i = 1:length(a)` (iterating over the indices of `a`) but is preferred in Julia to provide more flexibility with how the array `a` is indexed, such as for multidimensional arrays. There is also `for b in a` which iterates over the values in `a` rather than the indices, and `for (i, b) in pairs(a)` which iterates over both the indices and values without requiring the line `b = a[i]`.
-2. Julia indexing starts at 1, so `i=1` corresponds to the constant term, or a power of 0.
-3. The `@show` macro formats the output of the command nicely and prints it; the semi-colon at the end suppresses the normal output of the notebook cell, which is printed by default without the semi-colon.
+List any external references consulted, including classmates.

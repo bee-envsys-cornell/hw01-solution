@@ -21,8 +21,6 @@ execute:
     echo: true
     eval: true
 engine: julia
-julia:
-  exeflags: ["+1.11.5"]
 format-links: [pdf, ipynb]
 ---
 

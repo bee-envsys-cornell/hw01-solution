@@ -21,6 +21,8 @@ execute:
     echo: true
     eval: true
 engine: julia
+julia:
+  exeflags: ["+1.11.5"]
 format-links: [pdf, ipynb]
 ---
 
@@ -199,7 +201,7 @@ zero(false)
 
 Since `zero()` returns a scalar element (as seen in the examples), trying to index its output with `outcomes[i]` results in the error, as Julia does not know how to index into a scalar (in this case, an `Int`).
 
-However, the goal of the relevant line in the script is to initialize a vector consisting of zeros with length `n_trials`. What we actually want is the function [`zeros()`](https://www.jlhub.com/julia/manual/en/function/zeros). Fixing this gets rid of the error:
+However, the goal of the relevant line in the script is to initialize a vector consisting of zeros with length `n_trials`. What we actually want is the function [`zeros()`](https://www.jlhub.com/julia/manual/en/function/zeros). Fixing this gets rid of the error (I've also fixed another error with the code, namely the threshold for a "win", but this isn't essential for this problem):
 
 ```{julia}
 # function to simulate a passadieci roll: 3 6-sided dice
@@ -213,7 +215,7 @@ n_trials = 1_000
 outcomes = zeros(n_trials)
 # simulate number of passadieci rolls and count wins
 for i = 1:n_trials
-    outcomes[i] = (sum(passadieci()) > 11)
+    outcomes[i] = (sum(passadieci()) >= 11)
 end
 win_prob = sum(outcomes) / n_trials # compute average number of wins
 @show win_prob;

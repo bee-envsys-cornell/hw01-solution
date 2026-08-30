@@ -78,7 +78,7 @@ TBD
 The first observation is that between factory, the highest concentration is at the earlier factory's discharge, as CRUD only decays as it flows downriver and there are no intermediate sources. Thus if the river is in compliance at every discharge, it will be in compliance everywhere else. As a result, we only need to calculate conditions for compliance at the three river discharges.
 
 **Factory 1**: The inflow mass of CRUD is 
-$$\frac{0.2 \text{mg}}{\text{L}} \times \frac{1 \text{L}}\frac{1000 \text{mg}} \times \frac{500,000 \text{L}}{\text{d}} = 100 \text{mg}.$$
+$$\frac{0.2 \text{mg}}{\text{L}} \times \frac{1 \text{L}}{1000 \text{mg}} \times \frac{500,000 \text{L}}{\text{d}} = 100 \text{mg}.$$
 
 The pre-treatment effluent mass from Factory 1 is (similarly) $1000 \text{mg}$, so with a treatment level of $E_1$ Factory 1 would release $1000 (1 - E_1) \text{mg}$, for a combined mass of $1100 - 1000 E_1 \text{mg}$. Since the total volume of combined water (inflow + effluent) is $600 \text{L}$, the comparison of the concentration to the regulatory requirement is 
 $$

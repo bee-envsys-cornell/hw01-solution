@@ -10,16 +10,17 @@ format:
     html:        
         warning: true
         error: true
+        code-annotations: below
     ipynb:
         warning: true
         error: true
-        code-annotation: below
+        code-annotations: below
     typst:
         warning: true
         error: true
         toc: false
         date: "08/24/2026"
-
+        code-annotations: false
 execute: 
     echo: true
     eval: true
@@ -229,7 +230,7 @@ function remove_mean(vect)
 end
 
 random_vect = rand(1_000)
-@show remove_mean(random_vect)
+@show mean(remove_mean(random_vect));
 ```
 
 ### Problem 4 (5)
@@ -369,7 +370,7 @@ I will use a $\text{Dirichlet}(3, 1)$ distribution to draw 1,000 3-d vectors add
 
 ```{julia}
 yuk_samples = 100 * rand(Dirichlet(3, 1), 1_000) # <1>
-D, C = yuk_discharge(samps[1, :], samps[2, :]) # <2>
+D, C = yuk_discharge(yuk_samples[1, :], yuk_samples[2, :]) # <2>
 ```
 1. `rand(D, n)` draws n samples from a `Distribution` object `D`. We will see this again later when we talk about simulation and Monte Carlo. Also, since the Dirichlet distribution samples values between 0 and 1, I have to multiply by 100 to scale to wastewater volumes due to how I designed `yuk_discharge`.
 2. `a, b = ...` unpacks a tuple `(a, b)` into variables `a` and `b` without needing to explicitly use an intermediate step, *e.g.* `tup = ...`, `a = tup[1]`, `b = tup[2]`, which we could also have done. This is why I set up `yuk_discharge` to return a tuple, though there are other options. For example, `yuk_discharge` could have returned a vector, and a comprehension could have unpacked that into the two components, or you could have used two different functions for cost and concentration. This is why we aren't grading your code: there are many roads which lead to Rome!
@@ -415,7 +416,6 @@ However, they are fairly expensive. The minimum cost of these strategies is
 minimum(C[is_compliant])
 ```
 
-So we didn't find any strategies which cost less than \$270/day.
 
 #### Problem 5.5 (4)
 

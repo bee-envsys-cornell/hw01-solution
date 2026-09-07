@@ -72,7 +72,9 @@ Random.seed!(1)
 
 #### Problem 1.1 (2)
 
-TBD
+An example diagram might look like this:
+
+![River Diagram for Problem 1](figures/riley_river_diagram.svg)
 
 #### Problem 1.2 (5)
 
